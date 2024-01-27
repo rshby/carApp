@@ -74,3 +74,42 @@ func (c *CarRepository) GetById(ctx context.Context, id string) (*entity.Car, er
 	// success get data
 	return &car, nil
 }
+
+func (c *CarRepository) GetAll(ctx context.Context) ([]entity.Car, error) {
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CarRepository GetAll")
+	defer span.Finish()
+
+	// create statement
+	statement, err := c.DB.PrepareContext(ctx, "SELECT id, name, brand, year, price FROM car")
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+
+	// execute query
+	rows, err := statement.QueryContext(ctxTracing)
+	if err != nil {
+		return nil, err
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	var cars []entity.Car
+	for rows.Next() {
+		var car entity.Car
+		if err = rows.Scan(&car.Id, &car.Name, &car.Brand, &car.Year, &car.Price); err != nil {
+			return nil, err
+		}
+
+		cars = append(cars, car)
+	}
+
+	if len(cars) == 0 {
+		return nil, errors.New("record card not found")
+	}
+
+	// success get cars
+	return cars, nil
+}

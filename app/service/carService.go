@@ -8,9 +8,11 @@ import (
 	service "carApp/app/service/interface"
 	"carApp/graph/model"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/opentracing/opentracing-go"
+	"sync"
 )
 
 type CarService struct {
@@ -77,4 +79,46 @@ func (c *CarService) GetById(ctx context.Context, id string) (*model.CarDetailRe
 
 	// success get data
 	return &response, nil
+}
+
+// method get all data cars
+func (c *CarService) GetAll(ctx context.Context) ([]*model.CarDetailResponse, error) {
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CarService GetAll")
+	defer span.Finish()
+
+	// call procedure from repository
+	cars, err := c.CarRepository.GetAll(ctxTracing)
+	if err != nil {
+		return nil, err
+	}
+
+	// looping to response
+	wg := &sync.WaitGroup{}
+	mtx := &sync.Mutex{}
+	var response []*model.CarDetailResponse
+	for _, car := range cars {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, mtx *sync.Mutex, car entity.Car) {
+			mtx.Lock()
+			defer func() {
+				mtx.Unlock()
+				wg.Done()
+			}()
+			data := model.CarDetailResponse{
+				ID:    car.Id,
+				Name:  car.Name,
+				Brand: car.Brand,
+				Year:  car.Year,
+				Price: helper.ToFloat(car.Price),
+			}
+			response = append(response, &data)
+		}(wg, mtx, car)
+	}
+
+	wg.Wait()
+	if len(response) == 0 {
+		return nil, errors.New("record cars not found")
+	}
+
+	return response, nil
 }

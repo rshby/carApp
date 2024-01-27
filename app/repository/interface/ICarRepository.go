@@ -8,4 +8,5 @@ import (
 type ICarRepository interface {
 	Insert(ctx context.Context, input *entity.Car) (*entity.Car, error)
 	GetById(ctx context.Context, id string) (*entity.Car, error)
+	GetAll(ctx context.Context) ([]entity.Car, error)
 }

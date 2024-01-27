@@ -7,7 +7,7 @@ package graph
 import (
 	"carApp/graph/model"
 	"context"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // CreateCar is the resolver for the CreateCar field.
@@ -24,6 +24,14 @@ func (r *queryResolver) GetCar(ctx context.Context, input model.GetCar) (*model.
 	defer span.Finish()
 
 	return r.CarService.GetById(ctxTracing, input.ID)
+}
+
+// GetAll is the resolver for the GetAll field.
+func (r *queryResolver) GetAll(ctx context.Context) ([]*model.CarDetailResponse, error) {
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "GetAll")
+	defer span.Finish()
+
+	return r.CarService.GetAll(ctxTracing)
 }
 
 // Mutation returns MutationResolver implementation.

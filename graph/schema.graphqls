@@ -24,6 +24,7 @@ input CreateCarRequest {
 
 type Query {
   GetCar(input: GetCar!): CarDetailResponse!
+  GetAll: [CarDetailResponse!]!
 }
 
 type Mutation {
