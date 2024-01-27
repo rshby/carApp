@@ -46,6 +46,31 @@ func (c *CarRepository) Insert(ctx context.Context, input *entity.Car) (*entity.
 
 // method get by id
 func (c *CarRepository) GetById(ctx context.Context, id string) (*entity.Car, error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CarRepository GetById")
+	defer span.Finish()
+
+	// create prepare statement
+	statement, err := c.DB.PrepareContext(ctxTracing, "SELECT id, name, brand, year, price FROM car WHERE id=$1")
+	defer statement.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// query
+	row := statement.QueryRowContext(ctxTracing, id)
+	if err = row.Err(); err != nil {
+		return nil, err
+	}
+
+	// success get data
+	var car entity.Car
+	if err = row.Scan(&car.Id, &car.Name, &car.Brand, &car.Year, &car.Price); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("record with this id not found")
+		}
+		return nil, err
+	}
+
+	// success get data
+	return &car, nil
 }

@@ -20,7 +20,10 @@ func (r *mutationResolver) CreateCar(ctx context.Context, input model.CreateCarR
 
 // GetCar is the resolver for the GetCar field.
 func (r *queryResolver) GetCar(ctx context.Context, input model.GetCar) (*model.CarDetailResponse, error) {
-	return r.CarService.GetById(ctx, input.ID)
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "GetCar")
+	defer span.Finish()
+
+	return r.CarService.GetById(ctxTracing, input.ID)
 }
 
 // Mutation returns MutationResolver implementation.

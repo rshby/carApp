@@ -18,6 +18,10 @@ services:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_USER=admin
     restart: on-failure
+    networks:
+      - car-network
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   car-jaeger:
     image: jaegertracing/all-in-one:latest
@@ -36,3 +40,22 @@ services:
         mode: host
     depends_on:
       - car-db
+
+  car-app:
+    build: .
+    image: car-app
+    container_name: car-app
+    ports:
+      - target: 5005
+        published: 5005
+        protocol: tcp
+        mode: host
+    networks:
+      - car-network
+    depends_on:
+      - car-jaeger
+    environment:
+      - DATABASE_HOST=car-db
+      - DATABASE_PORT=5432
+      - JAEGER_HOST=car-jaeger
+

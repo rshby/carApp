@@ -1,17 +1,16 @@
 package service
 
 import (
+	"carApp/app/helper"
 	"carApp/app/logging"
 	"carApp/app/model/entity"
 	repository "carApp/app/repository/interface"
 	service "carApp/app/service/interface"
 	"carApp/graph/model"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/opentracing/opentracing-go"
-	"strconv"
 )
 
 type CarService struct {
@@ -51,17 +50,31 @@ func (c *CarService) Insert(ctx context.Context, request *model.CreateCarRequest
 		Name:  result.Name,
 		Brand: result.Brand,
 		Year:  result.Brand,
-		Price: ToFloat(result.Price),
+		Price: helper.ToFloat(result.Price),
 	}
 
 	return &response, nil
 }
 
 func (c *CarService) GetById(ctx context.Context, id string) (*model.CarDetailResponse, error) {
-	return nil, errors.New("feature belum jadi")
-}
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CarService GetById")
+	defer span.Finish()
 
-func ToFloat(price string) float64 {
-	num, _ := strconv.ParseFloat(price, 64)
-	return num
+	// call procedure in repository
+	car, err := c.CarRepository.GetById(ctxTracing, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// cast to response
+	response := model.CarDetailResponse{
+		ID:    car.Id,
+		Name:  car.Name,
+		Brand: car.Brand,
+		Year:  car.Year,
+		Price: helper.ToFloat(car.Price),
+	}
+
+	// success get data
+	return &response, nil
 }
