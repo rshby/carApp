@@ -1,0 +1,31 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type CarDetailResponse {
+  id: String!
+  name: String!
+  brand: String!
+  year: String!
+  price: Float!
+}
+
+input GetCar {
+  id: String!
+}
+
+input CreateCarRequest {
+  id: String!
+  name: String!
+  brand: String!
+  year: String!
+  price: Float!
+}
+
+type Query {
+  GetCar(input: GetCar!): CarDetailResponse!
+}
+
+type Mutation {
+  CreateCar(input: CreateCarRequest!): CarDetailResponse!
+}

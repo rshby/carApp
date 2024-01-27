@@ -1,0 +1,38 @@
+version: "3.8"
+
+networks:
+  car-network:
+    name: car-network
+    driver: bridge
+
+services:
+  car-db:
+    image: postgres:latest
+    container_name: car-db
+    ports:
+      - target: 5432
+        published: 5454
+        protocol: tcp
+        mode: host
+    environment:
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=admin
+    restart: on-failure
+
+  car-jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: car-jaeger
+    networks:
+      - car-network
+    restart: on-failure
+    ports:
+      - target: 16686
+        published: 16686
+        protocol: tcp
+        mode: host
+      - target: 6831
+        published: 6831
+        protocol: udp
+        mode: host
+    depends_on:
+      - car-db
